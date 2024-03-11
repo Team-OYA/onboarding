@@ -1,26 +1,21 @@
-# Use an official Node.js runtime as a parent image
-FROM node:20.9.0 AS build
+# Use the official Python image as a base image
+FROM python:3.10
 
-# Set the working directory in the container
+# Set the working directory to root
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the container
-COPY package*.json ./
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-# Install dependencies
-RUN npm install
+# Install any needed packages specified in requirements.txt
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
-# Copy the entire project to the container
-COPY . .
+# Expose port 5000 for the Flask application
+EXPOSE 5000
 
-# Build the React app
-RUN npm run build
+# Define environment variable
+ENV FLASK_APP=recommend/app.py
 
-# Use Nginx to serve the static files
-FROM nginx:alpine
-COPY --from=build /app/build /usr/share/nginx/html
-
-EXPOSE 80
-
-# Command to run the application
-CMD ["nginx", "-g", "daemon off;"]
+# Run app.py when the container launches
+CMD ["flask", "run", "--host=0.0.0.0"]
