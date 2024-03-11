@@ -15,16 +15,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
+    - name: Set up Python
+      uses: actions/setup-python@v2
       with:
-        node-version: '20.9.0'
-        
+        python-version: '3.10'
+
+    - name: .env setting
+      run: |
+        echo "${{ secrets.PYTHON_ENV }}" > .env
+
     - name: Docker build and push
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/thepoponboarding .
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/thepop-ai .
         docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-        docker push ${{ secrets.DOCKER_USERNAME }}/thepoponboarding
+        docker push ${{ secrets.DOCKER_USERNAME }}/thepop-ai
 
     - name: Deploy
       uses: appleboy/ssh-action@master
@@ -35,12 +39,12 @@ jobs:
         script: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
           # Stop and remove the existing container
-          docker stop thepoponboarding || true
-          docker rm thepoponboarding || true
+          docker stop thepop-ai || true
+          docker rm thepop-ai || true
 
           # Remove the existing image
-          docker rmi ${{ secrets.DOCKER_USERNAME }}/thepoponboarding || true
+          docker rmi ${{ secrets.DOCKER_USERNAME }}/thepop-ai || true
 
           # Pull and run the application container
-          docker pull ${{ secrets.DOCKER_USERNAME }}/thepoponboarding
-          docker run -d -p 80:80 --name thepoponboarding ${{ secrets.DOCKER_USERNAME }}/thepoponboarding
+          docker pull ${{ secrets.DOCKER_USERNAME }}/thepop-ai
+          docker run -d --name thepop-ai --network nginx-fe -v /home/ubuntu/fe_container/default.conf:/etc/nginx/conf.d/default.conf ${{ secrets.DOCKER_USERNAME }}/thepop-ai
